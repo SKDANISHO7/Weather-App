@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="clear">
+    <div class="weather-background">
+        <div class="gradient-animation"></div>
+        <div class="day-night-overlay"></div>
+        <div class="sunrise-sunset-animation"></div>
+    </div>
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">Fetching weather data...</div>
+    </div>
+
+    <div class="container">
+        <div class="header">
+            <h1>Weather App</h1>
+            <p>Your Advanced Weather Companion</p>
+        </div>
+
+        <div class="search-container">
+            <div class="search-box">
+                <input type="text" id="search-input" placeholder="Enter city name..." spellcheck="false">
+                <button id="search-btn"><i class="fas fa-search"></i></button>
+                <div class="recent-searches" id="recent-searches"></div>
+            </div>
+            <div class="search-dropdown" id="search-dropdown">
+                <!-- Dropdown content will be populated by JavaScript -->
+            </div>
+        </div>
+
+        <div class="error-message" id="error-message"></div>
+
+        <div class="weather-display">
+            <div class="current-weather">
+                <button class="favorite-btn" id="favorite-btn" title="Add to favorites"><i class="far fa-heart"></i></button>
+                <div class="location">
+                    <h2 id="city-name">--</h2>
+                    <p id="current-date">--</p>
+                </div>
+                <img src="https://openweathermap.org/img/wn/01d@2x.png" alt="Weather Icon" class="weather-icon" id="weather-icon">
+                <div class="temperature" id="current-temp">--</div>
+                <div class="description" id="weather-description">--</div>
+                <div class="temp-range">
+                    <div><i class="fas fa-temperature-arrow-up"></i> <span id="temp-max">--</span>°C</div>
+                    <div><i class="fas fa-temperature-arrow-down"></i> <span id="temp-min">--</span>°C</div>
+                </div>
+                <div class="temperature-scale">
+                    <div class="scale-item active" data-scale="celsius">°C</div>
+                    <div class="scale-item" data-scale="fahrenheit">°F</div>
+                    <div class="scale-item" data-scale="kelvin">K</div>
+                </div>
+                <div class="sun-moon">
+                    <div class="sun-moon-item">
+                        <div class="sun-moon-icon"><i class="fas fa-sun"></i></div>
+                        <div class="sun-moon-text">
+                            <div class="sun-moon-label">Sunrise</div>
+                            <div class="sun-moon-time" id="sunrise">--:--</div>
+                        </div>
+                    </div>
+                    <div class="sun-moon-item">
+                        <div class="sun-moon-icon"><i class="fas fa-moon"></i></div>
+                        <div class="sun-moon-text">
+                            <div class="sun-moon-label">Sunset</div>
+                            <div class="sun-moon-time" id="sunset">--:--</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="weather-details">
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-tint"></i></div>
+                        <div class="detail-text">
+                            <div class="detail-value" id="humidity">--%</div>
+                            <div class="detail-label">Humidity</div>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-wind"></i></div>
+                        <div class="detail-text">
+                            <div class="detail-value" id="wind-speed">-- km/h</div>
+                            <div class="detail-label">Wind Speed</div>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-compress-alt"></i></div>
+                        <div class="detail-text">
+                            <div class="detail-value" id="pressure">-- hPa</div>
+                            <div class="detail-label">Pressure</div>
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-icon"><i class="fas fa-eye"></i></div>
+                        <div class="detail-text">
+                            <div class="detail-value" id="visibility">-- km</div>
+                            <div class="detail-label">Visibility</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="air-quality" id="air-quality-container">
+                    <div class="detail-label">Air Quality Index</div>
+                    <div class="quality-value" id="air-quality">--</div>
+                    <div class="quality-status" id="air-quality-status">--</div>
+                    <div class="quality-meter">
+                        <div class="quality-indicator" id="quality-indicator"></div>
+                    </div>
+                    <div class="quality-labels">
+                        <span>Good</span>
+                        <span>Moderate</span>
+                        <span>Unhealthy</span>
+                        <span>Very Unhealthy</span>
+                        <span>Hazardous</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="forecast-container">
+                <h2 class="section-title">5-Day Forecast</h2>
+                <div class="forecast-days" id="forecast-days">
+                    <!-- Forecast days will be inserted here by JavaScript -->
+                </div>
+                <div class="hourly-forecast">
+                    <h3 class="section-title">Hourly Forecast</h3>
+                    <div class="hourly-container" id="hourly-forecast">
+                        <!-- Hourly forecast will be inserted here by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="comparison-container">
+            <h2 class="section-title">Weather Details</h2>
+            <div class="comparison-grid" id="comparison-grid">
+                <div class="metric-card wind">
+                    <div class="metric-icon">
+                        <i class="fas fa-wind"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>Wind Status</h3>
+                        <div class="metric-value">8.2 km/h</div>
+                        <div class="metric-direction">
+                            <i class="fas fa-location-arrow"></i>
+                            <span>WSW</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card humidity">
+                    <div class="metric-icon">
+                        <i class="fas fa-tint"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>Humidity</h3>
+                        <div class="metric-value">84%</div>
+                        <div class="humidity-bar">
+                            <div class="bar-fill" style="width: 84%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="metric-card visibility">
+                    <div class="metric-icon">
+                        <i class="fas fa-eye"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>Visibility</h3>
+                        <div class="metric-value">8.4 km</div>
+                        <div class="visibility-status">Clear view</div>
+                    </div>
+                </div>
+
+                <div class="metric-card pressure">
+                    <div class="metric-icon">
+                        <i class="fas fa-compress-alt"></i>
+                    </div>
+                    <div class="metric-info">
+                        <h3>Air Pressure</h3>
+                        <div class="metric-value">1015 hPa</div>
+                        <div class="pressure-trend">
+                            <i class="fas fa-arrow-up"></i>
+                            <span>Rising</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+<br><br>
+        <div class="footer">
+            <p>© 2023 WeatherSphere Pro | Advanced Weather Analytics Platform | Shaikh Danish</p>
+        </div>
+    </div>
+
+    <div class="theme-toggle" id="theme-toggle">
+        <i class="fas fa-moon"></i>
+    </div>
+
+    <script src="cities.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
