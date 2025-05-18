@@ -1,0 +1,217 @@
+/* Base styles for mobile-first approach */
+:root {
+    --card-min-width: 280px;
+    --card-max-width: 100%;
+}
+
+/* Mobile-first base styles */
+.container {
+    width: 100%;
+    padding: 10px;
+    margin: 0;
+    max-width: 100%;
+}
+
+.weather-display {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 0;
+    margin: 1rem 0;
+}
+
+.current-weather,
+.forecast-container,
+.comparison-container {
+    width: 100%;
+    max-width: var(--card-max-width);
+    min-width: var(--card-min-width);
+    margin: 0 auto;
+    padding: 1rem;
+}
+
+/* General styles for mobile responsiveness */
+@media (max-width: 768px) {
+    body {
+        font-size: 14px;
+        margin: 0;
+        padding: 0;
+        overflow-x: hidden;
+    }
+
+    .container {
+        padding: 10px;
+    }
+
+    .header h1 {
+        font-size: 1.5rem;
+        text-align: center;
+    }
+
+    .header p {
+        font-size: 0.9rem;
+        text-align: center;
+    }
+
+    .search-container {
+        width: 100%;
+        padding: 0 10px;
+    }
+
+    .search-box {
+        width: 100%;
+    }
+
+    .search-box input {
+        font-size: 1rem;
+        padding: 0.8rem 1rem;
+    }
+
+    .search-box button {
+        padding: 0.8rem;
+    }
+
+    .weather-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .detail-item {
+        padding: 0.8rem;
+    }
+
+    .forecast-days {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+
+    .hourly-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.5rem;
+        overflow-x: hidden;
+        padding: 0.5rem;
+    }
+
+    .hourly-item {
+        min-width: unset;
+    }
+
+    .comparison-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 0.5rem;
+        padding: 0.5rem;
+    }
+
+    .metric-card {
+        padding: 0.8rem;
+    }
+
+    .temperature {
+        font-size: 2.5rem;
+    }
+
+    .temp-range {
+        font-size: 0.9rem;
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .air-quality {
+        padding: 0.8rem;
+    }
+
+    .quality-labels {
+        display: flex;
+        font-size: 0.7rem;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+    }
+
+    /* Adjust scroll behavior for touch devices */
+    .hourly-container {
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+
+    .hourly-container::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Improve touch targets */
+    .temperature-scale {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+    }
+
+    .scale-item {
+        padding: 0.5rem 1rem;
+        font-size: 1rem;
+    }
+
+    /* Fix spacing for weather icon and details */
+    .weather-icon {
+        width: 60px;
+        height: 60px;
+        margin: 0.5rem auto;
+    }
+
+    /* Better visibility for small screens */
+    .detail-value {
+        font-size: 1.1rem;
+    }
+
+    .detail-label {
+        font-size: 0.8rem;
+    }
+
+    /* Added styles for weather background and gradient animation for mobile */
+    .weather-background {
+        height: auto;
+    }
+
+    .gradient-animation {
+        background-size: 200% 200%;
+    }
+
+    .day-night-overlay {
+        display: none;
+    }
+}
+
+/* Tablet and larger phone styles */
+@media (min-width: 769px) and (max-width: 1024px) {
+    .weather-display {
+        grid-template-columns: 1fr;
+    }
+
+    .current-weather,
+    .forecast-container,
+    .comparison-container {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+}
+
+/* Ensure proper display on larger screens */
+@media (min-width: 1025px) {
+    .weather-display {
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    }
+}
+
+/* Handle device orientation changes */
+@media screen and (orientation: landscape) and (max-height: 500px) {
+    .weather-display {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 0.5rem;
+    }
+}
