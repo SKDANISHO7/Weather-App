@@ -181,8 +181,16 @@
         background-size: 200% 200%;
     }
 
+    /* Fix: Always show day-night overlay for mobile, so night theme works */
     .day-night-overlay {
-        display: none;
+        display: block !important;
+    }
+
+    /* Ensure sunrise/sunset overlays are visible and smooth on mobile */
+    .sunrise-overlay, .sunset-overlay {
+        display: block !important;
+        opacity: 0.98 !important;
+        transition: opacity 1s cubic-bezier(0.4,0,0.2,1);
     }
 }
 
