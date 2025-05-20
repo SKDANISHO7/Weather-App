@@ -1,0 +1,309 @@
+/* Main Container Layout */
+.container {
+    max-width: 1200px;
+    margin: 1rem auto;
+    padding: clamp(0.5rem, 3vw, 1.5rem);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: clamp(1rem, 4vw, 2rem);
+    min-height: 100vh;
+}
+
+/* Search and Header Area */
+.header,
+.search-container {
+    width: 100%;
+    max-width: min(600px, 92vw);
+    margin: 0 auto;
+}
+
+/* Weather Display Grid */
+.weather-display {
+    width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: clamp(1rem, 4vw, 2rem);
+    align-items: start;
+}
+
+/* Shared Container Styles */
+.weather-container,
+.current-weather,
+.forecast-container,
+.comparison-container {
+    width: 100%;
+    max-width: min(800px, 94vw);
+    margin: 0 auto;
+    padding: clamp(1rem, 4vw, 2rem);
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    border-radius: clamp(16px, 4vw, 24px);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.1),
+        0 2px 8px rgba(0, 0, 0, 0.05);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Mobile-optimized typography */
+@media (max-width: 767px) {
+    h1 {
+        font-size: clamp(1.5rem, 6vw, 2rem);
+    }
+    h2 {
+        font-size: clamp(1.25rem, 5vw, 1.5rem);
+    }
+    p, .detail-value, .detail-label {
+        font-size: clamp(0.875rem, 4vw, 1rem);
+    }
+}
+
+/* Enhanced Mobile Responsiveness */
+@media (max-width: 480px) {
+    .container {
+        margin: 0.5rem auto;
+        padding: 0.5rem;
+        gap: 1rem;
+    }
+
+    .weather-container,
+    .current-weather,
+    .forecast-container,
+    .comparison-container {
+        padding: 1rem;
+        border-radius: 16px;
+        margin: 0 auto;
+    }
+
+    /* Stack grid items vertically */
+    .weather-details-grid {
+        grid-template-columns: 1fr !important;
+        gap: 0.75rem !important;
+    }
+
+    /* Adjust spacing for mobile */
+    .detail-item {
+        padding: 0.75rem !important;
+        gap: 0.5rem !important;
+    }
+
+    /* Make forecast scrollable on mobile */
+    .forecast-days {
+        display: flex !important;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        padding: 0.5rem 0;
+        margin: -0.5rem -1rem;
+        padding: 0.5rem 1rem;
+    }
+
+    .forecast-day {
+        min-width: 140px !important;
+        scroll-snap-align: start;
+        flex-shrink: 0;
+    }
+
+    /* Improve touch targets */
+    button, 
+    .search-box button,
+    .scale-item,
+    .favorite-btn {
+        min-height: 44px !important;
+        min-width: 44px !important;
+    }
+
+    /* Hide scrollbars but keep functionality */
+    .forecast-days {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+    }
+    
+    .forecast-days::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* Optimize transitions for mobile */
+    * {
+        transition-duration: 200ms !important;
+    }
+}
+
+/* Tablet Optimizations */
+@media (min-width: 481px) and (max-width: 1024px) {
+    .container {
+        padding: 1rem;
+    }
+
+    .weather-container,
+    .current-weather,
+    .forecast-container,
+    .comparison-container {
+        padding: 1.5rem;
+        border-radius: 20px;
+    }
+
+    .weather-details-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+    }
+}
+
+/* Handle notched phones */
+@supports (padding: max(0px)) {
+    .container {
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+        padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+}
+
+/* Landscape Mode Optimization */
+@media (max-height: 500px) and (orientation: landscape) {
+    .container {
+        gap: 0.75rem;
+    }
+
+    .weather-display {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .current-weather,
+    .forecast-container,
+    .comparison-container {
+        flex: 1 1 300px;
+        margin: 0;
+    }
+}
+
+/* Current Weather Section */
+.current-weather {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    backdrop-filter: blur(5px);
+}
+
+/* Forecast Container */
+.forecast-container {
+    max-width: 800px;
+    margin: 2rem auto 0;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    backdrop-filter: blur(5px);
+}
+
+/* Comparison Container */
+.comparison-container {
+    max-width: 800px;
+    margin: 2rem auto 0;
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    backdrop-filter: blur(5px);
+}
+
+/* Header Styles */
+.header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 15px;
+    backdrop-filter: blur(5px);
+    width: 100%;
+    max-width: 800px;
+}
+
+/* Search Container */
+.search-container {
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto 2rem;
+}
+
+/* Footer Styles */
+.footer {
+    width: 100%;
+    max-width: 800px;
+    margin-top: auto;
+    padding: 1.5rem;
+    text-align: center;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(12px);
+    border-radius: 24px;
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .container {
+        padding: 2rem;
+    }
+
+    .weather-display {
+        grid-template-columns: minmax(0, 800px);
+    }
+}
+
+@media (max-width: 767px) {
+    .container {
+        padding: 1rem;
+        gap: 1.5rem;
+        margin: 1rem auto;
+    }
+
+    .weather-container,
+    .current-weather,
+    .forecast-container,
+    .comparison-container,
+    .footer {
+        padding: 1.5rem;
+        border-radius: 20px;
+    }
+
+    .weather-display {
+        gap: 1.5rem;
+    }
+
+    /* Disable hover effects on mobile */
+    .current-weather:hover,
+    .forecast-container:hover,
+    .comparison-container:hover {
+        transform: none;
+        box-shadow: 
+            0 8px 32px rgba(0, 0, 0, 0.1),
+            0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+}
+
+/* Ensure content doesn't overflow */
+* {
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Container transitions */
+.weather-container,
+.current-weather,
+.forecast-container,
+.comparison-container {
+    overflow: hidden;
+    position: relative;
+}
+
+/* Performance Optimizations */
+@media (prefers-reduced-motion) {
+    .weather-background,
+    .day-night-overlay,
+    .gradient-animation,
+    .cloud-effect .cloud,
+    .rain-effect .raindrop,
+    .snow-effect .snowflake {
+        transition: opacity 0.3s ease;
+        animation: none;
+    }
+}
