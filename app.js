@@ -249,6 +249,61 @@ function updateUI(data, originalCity) {
 
     // Update temperature scale
     updateTemperatureScale();
+
+    // Update Weather Details container
+    const weatherDetails = document.getElementById('comparison-grid');
+    const windValue = weatherDetails.querySelector('.wind .metric-value');
+    const windDirection = weatherDetails.querySelector('.wind .metric-direction span');
+    const humidityValue = weatherDetails.querySelector('.humidity .metric-value');
+    const humidityBar = weatherDetails.querySelector('.humidity .bar-fill');
+    const visibilityValue = weatherDetails.querySelector('.visibility .metric-value');
+    const visibilityStatus = weatherDetails.querySelector('.visibility .visibility-status');
+    const pressureValue = weatherDetails.querySelector('.pressure .metric-value');
+    const pressureTrend = weatherDetails.querySelector('.pressure .pressure-trend span');
+    const pressureIcon = weatherDetails.querySelector('.pressure .pressure-trend i');
+
+    // Update wind
+    const windSpeedKmh = Math.round(data.wind.speed * 3.6); // Convert m/s to km/h
+    windValue.textContent = `${windSpeedKmh} km/h`;
+    
+    // Update wind direction
+    const windDeg = data.wind.deg;
+    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
+    const directionIndex = Math.round(((windDeg + 11.25) % 360) / 22.5);
+    windDirection.textContent = directions[directionIndex];
+    
+    // Update humidity
+    humidityValue.textContent = `${data.main.humidity}%`;
+    humidityBar.style.width = `${data.main.humidity}%`;
+    
+    // Update visibility
+    const visibilityKm = (data.visibility / 1000).toFixed(1);
+    visibilityValue.textContent = `${visibilityKm} km`;
+    // Set visibility status
+    if (visibilityKm >= 10) {
+        visibilityStatus.textContent = 'Clear view';
+        visibilityStatus.style.color = 'var(--success)';
+    } else if (visibilityKm >= 5) {
+        visibilityStatus.textContent = 'Moderate';
+        visibilityStatus.style.color = '#ffd700';
+    } else {
+        visibilityStatus.textContent = 'Poor visibility';
+        visibilityStatus.style.color = '#ff7e5f';
+    }
+    
+    // Update pressure
+    pressureValue.textContent = `${data.main.pressure} hPa`;
+    // Set pressure trend (comparing with standard pressure 1013.25 hPa)
+    if (data.main.pressure > 1013.25) {
+        pressureTrend.textContent = 'Rising';
+        pressureIcon.className = 'fas fa-arrow-up';
+    } else if (data.main.pressure < 1013.25) {
+        pressureTrend.textContent = 'Falling';
+        pressureIcon.className = 'fas fa-arrow-down';
+    } else {
+        pressureTrend.textContent = 'Steady';
+        pressureIcon.className = 'fas fa-arrows-alt-h';
+    }
 }
 
 // --- THEME SYSTEM ---
@@ -262,64 +317,75 @@ function applyWeatherTheme({ weather, isDay, temp, humidity, isDarkMode }) {
     document.body.classList.add(weather, isDay ? 'day' : 'night');
     weatherBackground.classList.add(weather, isDay ? 'day' : 'night');
 
+    // Automatically set dark mode based on time if not manually set
+    if (localStorage.getItem('weatherDarkMode') === null) {
+        const currentHour = new Date().getHours();
+        isDarkMode = currentHour < 6 || currentHour >= 18; // Dark mode between 6 PM and 6 AM
+    }
+
     // Set CSS variables for gradients and overlays
-    // (These will be used in styles.css for backgrounds, overlays, and UI)
     let gradient = '';
     let overlay = '';
     let accent = '';
     let climateEffect = '';
-    // Weather-based gradients
+
+    // Weather-based gradients optimized for mobile
     if (weather === 'clear') {
         gradient = isDay
             ? 'linear-gradient(135deg, #56ccf2 0%, #2f80ed 100%)'
-            : 'linear-gradient(135deg, #232526 0%, #414345 100%)';
+            : 'linear-gradient(135deg, #1f2937 0%, #111827 100%)';
         accent = isDay ? '#ffe066' : '#bfcfff';
     } else if (weather === 'clouds') {
         gradient = isDay
-            ? 'linear-gradient(135deg, #a2a6a7 0%, #717e88 100%)'
-            : 'linear-gradient(135deg, #292E49 0%, #536976 100%)';
+            ? 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)'
+            : 'linear-gradient(135deg, #1f2937 0%, #374151 100%)';
         accent = '#bfcfff';
     } else if (weather === 'rain' || weather === 'rainy') {
         gradient = isDay
             ? 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)'
-            : 'linear-gradient(135deg, #232526 0%, #414345 100%)';
+            : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)';
         accent = '#4facfe';
         overlay = 'rain';
     } else if (weather === 'thunderstorm') {
-        gradient = isDay
-            ? 'linear-gradient(135deg, #283E51 0%, #4B79A1 100%)'
-            : 'linear-gradient(135deg, #0f0c29 0%, #302b63 100%)';
+        gradient = 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)';
         accent = '#ffd700';
         overlay = 'thunderstorm';
     } else if (weather === 'snow') {
         gradient = isDay
-            ? 'linear-gradient(135deg, #bcc7cf 0%, #aab5bc 100%)'
-            : 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)';
+            ? 'linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)'
+            : 'linear-gradient(135deg, #1e293b 0%, #334155 100%)';
         accent = '#e0eaff';
         overlay = 'snow';
     } else if (weather === 'mist' || weather === 'fog' || weather === 'haze') {
         gradient = isDay
-            ? 'linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%)'
-            : 'linear-gradient(135deg, #2C3E50 0%, #3498DB 100%)';
+            ? 'linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%)'
+            : 'linear-gradient(135deg, #334155 0%, #1e293b 100%)';
         accent = '#bfcfff';
         overlay = 'fog';
-    } else {
-        gradient = isDay
-            ? 'linear-gradient(135deg, #56ccf2 0%, #2f80ed 100%)'
-            : 'linear-gradient(135deg, #232526 0%, #414345 100%)';
-        accent = '#ffe066';
     }
-    // Climate-based overlays
+
+    // Set temperature-based effects
     if (typeof temp === 'number') {
         if (temp >= 35) climateEffect = 'heat';
         else if (temp <= 5) climateEffect = 'frost';
     }
     if (typeof humidity === 'number' && humidity >= 85) climateEffect = 'humid';
-    // Set CSS variables
+
+    // Apply CSS variables with smoother transitions
     document.body.style.setProperty('--weather-gradient', gradient);
     document.body.style.setProperty('--weather-accent', accent);
     document.body.style.setProperty('--weather-overlay', overlay);
     document.body.style.setProperty('--weather-climate', climateEffect);
+    
+    // Force hardware acceleration for smoother animations on mobile
+    document.body.style.setProperty('--hardware-acceleration', 'translateZ(0)');
+    weatherBackground.style.setProperty('--hardware-acceleration', 'translateZ(0)');
+
+    // Update theme toggle icon
+    const themeIcon = document.querySelector('.theme-toggle i');
+    if (themeIcon) {
+        themeIcon.className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
+    }
 }
 
 // --- updateWeatherBackground: now uses applyWeatherTheme ---
@@ -632,13 +698,24 @@ function updateWeatherBackground(data) {
 
 // --- IMPROVED: updateDayNightCycle for mobile sunrise/sunset theme ---
 function updateDayNightCycle(data) {
+    // Get current UTC time
     const now = new Date();
+    
+    // Convert sunrise/sunset times to city's local time
     const sunrise = new Date(data.sys.sunrise * 1000);
     const sunset = new Date(data.sys.sunset * 1000);
     
-    // Add timezone offset for accurate local time
-    const timezoneOffset = data.timezone;
-    const localTime = new Date(now.getTime() + (timezoneOffset * 1000));
+    // Get the timezone offset for the city
+    const cityTimezoneOffset = data.timezone;
+    
+    // Get user's local timezone offset in seconds
+    const userTimezoneOffset = now.getTimezoneOffset() * 60;
+    
+    // Calculate the total offset needed
+    const totalOffset = cityTimezoneOffset + userTimezoneOffset;
+    
+    // Apply the offset to get the correct local time
+    const localTime = new Date(now.getTime() + (totalOffset * 1000));
     
     // Calculate sunrise/sunset transitions with wider windows
     const sunriseStart = new Date(sunrise.getTime() - 45 * 60 * 1000); // 45 min before
@@ -683,14 +760,26 @@ function updateDayNightCycle(data) {
 }
 
 function isDayTime(data) {
+    // Get current UTC time
     const now = new Date();
+    
+    // Convert sunrise/sunset times to city's local time
     const sunrise = new Date(data.sys.sunrise * 1000);
     const sunset = new Date(data.sys.sunset * 1000);
     
-    // Add timezone offset
-    const timezoneOffset = data.timezone;
-    const localTime = new Date(now.getTime() + (timezoneOffset * 1000));
+    // Get the timezone offset for Nanded (or any city)
+    const cityTimezoneOffset = data.timezone;
     
+    // Get user's local timezone offset in seconds
+    const userTimezoneOffset = now.getTimezoneOffset() * 60;
+    
+    // Calculate the total offset needed
+    const totalOffset = cityTimezoneOffset + userTimezoneOffset;
+    
+    // Apply the offset to get the correct local time
+    const localTime = new Date(now.getTime() + (totalOffset * 1000));
+    
+    // Compare with sunrise and sunset times
     return localTime > sunrise && localTime < sunset;
 }
 
@@ -777,19 +866,44 @@ function updateForecast(data) {
         const dayData = day.data[0]; // Use first entry of the day for daily forecast
         const date = new Date(dayData.dt * 1000);
         
+        // Calculate average temperature, min, and max for the day
+        const temps = day.data.map(d => d.main.temp);
+        const avgTemp = temps.reduce((a, b) => a + b, 0) / temps.length;
+        const minTemp = Math.min(...temps);
+        const maxTemp = Math.max(...temps);
+        
         const dayElement = document.createElement('div');
         dayElement.className = `forecast-day ${index === 0 ? 'active' : ''}`;
         dayElement.dataset.date = date.toISOString().split('T')[0];
+        
+        // Convert temperatures based on current scale
+        const tempDisplay = currentScale === 'fahrenheit' 
+            ? `${Math.round((avgTemp * 9/5) + 32)}°F` 
+            : currentScale === 'kelvin'
+                ? `${Math.round(avgTemp + 273.15)}K`
+                : `${Math.round(avgTemp)}°C`;
+
+        const minTempDisplay = currentScale === 'fahrenheit'
+            ? `${Math.round((minTemp * 9/5) + 32)}°`
+            : currentScale === 'kelvin'
+                ? `${Math.round(minTemp + 273.15)}°`
+                : `${Math.round(minTemp)}°`;
+
+        const maxTempDisplay = currentScale === 'fahrenheit'
+            ? `${Math.round((maxTemp * 9/5) + 32)}°`
+            : currentScale === 'kelvin'
+                ? `${Math.round(maxTemp + 273.15)}°`
+                : `${Math.round(maxTemp)}°`;
         
         dayElement.innerHTML = `
             <div class="day-name">${index === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'long' })}</div>
             <div class="day-date">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
             <img src="https://openweathermap.org/img/wn/${dayData.weather[0].icon}@2x.png" alt="${dayData.weather[0].description}" class="forecast-icon">
-            <div class="forecast-temp">${Math.round(dayData.main.temp)}°C</div>
+            <div class="forecast-temp">${tempDisplay}</div>
             <div class="forecast-description">${dayData.weather[0].description}</div>
             <div class="forecast-details">
-                <div><i class="fas fa-temperature-arrow-up"></i> ${Math.round(dayData.main.temp_max)}°</div>
-                <div><i class="fas fa-temperature-arrow-down"></i> ${Math.round(dayData.main.temp_min)}°</div>
+                <div title="Maximum temperature"><i class="fas fa-temperature-arrow-up"></i> ${maxTempDisplay}</div>
+                <div title="Minimum temperature"><i class="fas fa-temperature-arrow-down"></i> ${minTempDisplay}</div>
             </div>
         `;
         
@@ -832,17 +946,28 @@ function groupForecastByDay(forecastList) {
 function updateHourlyForecast(hourlyData) {
     hourlyForecast.innerHTML = '';
     
-    hourlyData.forEach(item => {
+    hourlyData.forEach((item, index) => {
         const date = new Date(item.dt * 1000);
         const timeString = date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
         
         const hourElement = document.createElement('div');
         hourElement.className = 'hourly-item';
+        hourElement.style.animationDelay = `${0.6 + (index * 0.1)}s`;
+        
+        // Convert temperature based on current scale
+        const temp = currentScale === 'fahrenheit' 
+            ? Math.round((item.main.temp * 9/5) + 32)
+            : currentScale === 'kelvin'
+                ? Math.round(item.main.temp + 273.15)
+                : Math.round(item.main.temp);
+        
+        const scale = currentScale === 'fahrenheit' ? 'F' 
+            : currentScale === 'kelvin' ? 'K' : 'C';
         
         hourElement.innerHTML = `
             <div class="hour-time">${timeString}</div>
             <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" alt="${item.weather[0].description}" class="hour-icon">
-            <div class="hour-temp">${Math.round(item.main.temp)}°</div>
+            <div class="hour-temp">${temp}°${scale}</div>
             <div class="forecast-description">${item.weather[0].description}</div>
         `;
         
