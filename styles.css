@@ -301,6 +301,8 @@ body.mist {
     position: relative;
     z-index: 1;
     border: none;
+    width: 100%;
+    margin-bottom: 1.5rem;
 }
 
 .current-weather::before,
@@ -363,51 +365,26 @@ body.mist {
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     gap: 1rem;
     margin-top: 1.5rem;
-}
-
-.forecast-day {
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 15px;
-    padding: 1.5rem;
-    text-align: center;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.forecast-day:hover {
-    transform: translateY(-3px);
-    background: rgba(255, 255, 255, 0.2);
-}
-
-.forecast-day.active {
-    background: rgba(255, 255, 255, 0.25);
-    border: 2px solid rgba(255, 255, 255, 0.5);
+    width: 100%;
 }
 
 /* Hourly Forecast Layout */
 .hourly-container {
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 1rem;
-    padding: 1rem 0;
-    overflow-x: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    width: 100%;
     margin-top: 1.5rem;
-    padding-bottom: 1rem;
+    overflow-x: auto;
 }
 
-.hourly-item {
-    min-width: 120px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 12px;
-    padding: 1rem;
-    text-align: center;
-    transition: transform 0.3s ease;
-}
-
-.hourly-item:hover {
-    transform: translateY(-3px);
-    background: rgba(255, 255, 255, 0.2);
+/* Weather Details Section */
+.weather-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    width: 100%;
+    margin-top: 1.5rem;
 }
 
 /* Comparison Grid Layout */
@@ -741,6 +718,10 @@ body.mist {
     .weather-details {
         grid-template-columns: 1fr;
         gap: 0.8rem;
+    }
+
+    .hourly-container {
+        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     }
 }
 
