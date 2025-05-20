@@ -9,7 +9,7 @@ const api = {
         key: "9fd3e42f107014b62cb7b2bbfcbea1bd"
     },
     airQuality: {
-        url: "http://api.openweathermap.org/data/2.5/air_pollution?",
+        url: "https://api.openweathermap.org/data/2.5/air_pollution?",
         key: "9fd3e42f107014b62cb7b2bbfcbea1bd"
     },
     geocoding: {
@@ -240,7 +240,7 @@ function updateUI(data, originalCity) {
     sunrise.textContent = sunriseTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     sunset.textContent = sunsetTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
-        // Update weather background and time-based effects
+    // Update weather background and time-based effects
     updateWeatherBackground(data);
     updateDayNightCycle(data);
 
@@ -251,22 +251,378 @@ function updateUI(data, originalCity) {
     updateTemperatureScale();
 }
 
+// --- THEME SYSTEM ---
+function applyWeatherTheme({ weather, isDay, temp, humidity, isDarkMode }) {
+    // Remove all weather/time classes
+    document.body.className = '';
+    weatherBackground.className = 'weather-background';
+
+    // Set base theme classes
+    document.body.classList.add(isDarkMode ? 'dark-mode' : 'light-mode');
+    document.body.classList.add(weather, isDay ? 'day' : 'night');
+    weatherBackground.classList.add(weather, isDay ? 'day' : 'night');
+
+    // Set CSS variables for gradients and overlays
+    // (These will be used in styles.css for backgrounds, overlays, and UI)
+    let gradient = '';
+    let overlay = '';
+    let accent = '';
+    let climateEffect = '';
+    // Weather-based gradients
+    if (weather === 'clear') {
+        gradient = isDay
+            ? 'linear-gradient(135deg, #56ccf2 0%, #2f80ed 100%)'
+            : 'linear-gradient(135deg, #232526 0%, #414345 100%)';
+        accent = isDay ? '#ffe066' : '#bfcfff';
+    } else if (weather === 'clouds') {
+        gradient = isDay
+            ? 'linear-gradient(135deg, #a2a6a7 0%, #717e88 100%)'
+            : 'linear-gradient(135deg, #292E49 0%, #536976 100%)';
+        accent = '#bfcfff';
+    } else if (weather === 'rain' || weather === 'rainy') {
+        gradient = isDay
+            ? 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)'
+            : 'linear-gradient(135deg, #232526 0%, #414345 100%)';
+        accent = '#4facfe';
+        overlay = 'rain';
+    } else if (weather === 'thunderstorm') {
+        gradient = isDay
+            ? 'linear-gradient(135deg, #283E51 0%, #4B79A1 100%)'
+            : 'linear-gradient(135deg, #0f0c29 0%, #302b63 100%)';
+        accent = '#ffd700';
+        overlay = 'thunderstorm';
+    } else if (weather === 'snow') {
+        gradient = isDay
+            ? 'linear-gradient(135deg, #bcc7cf 0%, #aab5bc 100%)'
+            : 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)';
+        accent = '#e0eaff';
+        overlay = 'snow';
+    } else if (weather === 'mist' || weather === 'fog' || weather === 'haze') {
+        gradient = isDay
+            ? 'linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%)'
+            : 'linear-gradient(135deg, #2C3E50 0%, #3498DB 100%)';
+        accent = '#bfcfff';
+        overlay = 'fog';
+    } else {
+        gradient = isDay
+            ? 'linear-gradient(135deg, #56ccf2 0%, #2f80ed 100%)'
+            : 'linear-gradient(135deg, #232526 0%, #414345 100%)';
+        accent = '#ffe066';
+    }
+    // Climate-based overlays
+    if (typeof temp === 'number') {
+        if (temp >= 35) climateEffect = 'heat';
+        else if (temp <= 5) climateEffect = 'frost';
+    }
+    if (typeof humidity === 'number' && humidity >= 85) climateEffect = 'humid';
+    // Set CSS variables
+    document.body.style.setProperty('--weather-gradient', gradient);
+    document.body.style.setProperty('--weather-accent', accent);
+    document.body.style.setProperty('--weather-overlay', overlay);
+    document.body.style.setProperty('--weather-climate', climateEffect);
+}
+
+// --- updateWeatherBackground: now uses applyWeatherTheme ---
 function updateWeatherBackground(data) {
     const weather = data.weather[0].main.toLowerCase();
     const isDay = isDayTime(data);
-    
-    // First remove all weather classes
-    weatherBackground.className = 'weather-background';
-    
+    const temp = data.main.temp;
+    const humidity = data.main.humidity;
+    // Always use isDarkMode from state
+    applyWeatherTheme({ weather, isDay, temp, humidity, isDarkMode });    // Remove any previous effect overlays
+    const prevEffect = document.getElementById('weather-effect');
+    if (prevEffect) prevEffect.remove();
+
+    // Create a new effect overlay
+    const effect = document.createElement('div');
+    effect.id = 'weather-effect';
+    effect.style.position = 'fixed';
+    effect.style.top = '0';
+    effect.style.left = '0';
+    effect.style.width = '100vw';
+    effect.style.height = '100vh';
+    effect.style.pointerEvents = 'none';
+    effect.style.zIndex = '0';
+    effect.style.transition = 'opacity 0.8s cubic-bezier(0.4,0,0.2,1)';
+    effect.style.opacity = '0';
+    setTimeout(() => { effect.style.opacity = '1'; }, 30);
+
+    // Helper: create parallax wrapper
+    function parallaxWrap(child, speed = 0.5) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'parallax-wrap';
+        wrapper.style.position = 'absolute';
+        wrapper.style.width = '100%';
+        wrapper.style.height = '100%';
+        wrapper.style.top = '0';
+        wrapper.style.left = '0';
+        wrapper.style.pointerEvents = 'none';
+        wrapper.style.zIndex = '1';
+        wrapper.appendChild(child);
+        // Parallax effect on mouse move
+        window.onmousemove = (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * speed * 30;
+            const y = (e.clientY / window.innerHeight - 0.5) * speed * 30;
+            wrapper.style.transform = `translate(${x}px,${y}px)`;
+        };
+        return wrapper;
+    }    // --- SUN & MOON ANIMATION ---
+    // Remove previous sun/moon if any
+    const prevSun = document.getElementById('sun-anim');
+    if (prevSun) prevSun.remove();
+    const prevMoon = document.getElementById('moon-anim');
+    if (prevMoon) prevMoon.remove();
+
+    // Calculate sun/moon position based on time
+    const now = new Date();
+    const sunrise = new Date(data.sys.sunrise * 1000);
+    const sunset = new Date(data.sys.sunset * 1000);
+    const timezoneOffset = data.timezone;
+    const localTime = new Date(now.getTime() + (timezoneOffset * 1000));
+    let percent = 0;
+    if (isDay) {
+        percent = (localTime - sunrise) / (sunset - sunrise);
+        percent = Math.max(0, Math.min(1, percent));
+    } else {
+        // Night: moon moves from sunset to next sunrise
+        let nextSunrise = new Date(sunrise.getTime() + 24 * 60 * 60 * 1000);
+        percent = (localTime - sunset) / (nextSunrise - sunset);
+        percent = Math.max(0, Math.min(1, percent));
+    }
+    // Sun or moon position: move in an arc across the sky
+    const skyArc = (p) => {
+        // Arc: left to right, y = sin(pi * p)
+        const x = 10 + 80 * p; // 10vw to 90vw
+        const y = 60 - 40 * Math.sin(Math.PI * p); // 60vh to 20vh (arc)
+        return { x, y };
+    };
+    if (isDay) {
+        const sun = document.createElement('div');
+        sun.id = 'sun-anim';
+        sun.className = 'sun-anim sun-glow';
+        const pos = skyArc(percent);
+        sun.style.position = 'absolute';
+        sun.style.left = pos.x + 'vw';
+        sun.style.top = pos.y + 'vh';
+        sun.style.width = '90px';
+        sun.style.height = '90px';
+        sun.style.borderRadius = '50%';
+        sun.style.boxShadow = '0 0 80px 40px #ffe066, 0 0 200px 80px #fffbe6';
+        sun.style.zIndex = '5';
+        sun.style.transition = 'left 1s linear, top 1s linear';
+        effect.appendChild(sun);
+    } else {
+        const moon = document.createElement('div');
+        moon.id = 'moon-anim';
+        moon.className = 'moon-anim moon-glow';
+        const pos = skyArc(percent);
+        moon.style.position = 'absolute';
+        moon.style.left = pos.x + 'vw';
+        moon.style.top = pos.y + 'vh';
+        moon.style.width = '70px';
+        moon.style.height = '70px';
+        moon.style.borderRadius = '50%';
+        moon.style.background = 'radial-gradient(circle at 60% 40%, #fff 80%, #e0e0e0 100%)';
+        moon.style.boxShadow = '0 0 60px 20px #e0eaff, 0 0 120px 40px #bfcfff';
+        moon.style.zIndex = '5';
+        moon.style.transition = 'left 1s linear, top 1s linear';
+        effect.appendChild(moon);
+    }
+
+    // --- WEATHER EFFECTS ---
+    if (weather === 'rain' || weather === 'rainy') {
+        // Clouds
+        const clouds = document.createElement('div');
+        clouds.className = 'cloud-effect';
+        clouds.innerHTML = '<div class="cloud"></div><div class="cloud c2"></div><div class="cloud c3"></div>';
+        setCloudAnimationDelays(clouds);
+        effect.appendChild(parallaxWrap(clouds, 0.3));
+        // Rain
+        const rain = document.createElement('div');
+        rain.className = 'rain-effect';
+        for (let i = 0; i < 80; i++) {
+            const drop = document.createElement('div');
+            drop.className = 'raindrop';
+            drop.style.left = Math.random() * 100 + 'vw';
+            drop.style.animationDelay = (Math.random() * 1.2) + 's';
+            drop.style.height = (14 + Math.random() * 14) + 'px';
+            rain.appendChild(drop);
+        }
+        effect.appendChild(rain);
+        // Wind (more gusts)
+        const wind = document.createElement('div');
+        wind.className = 'wind-effect';
+        let windHtml = '';
+        for (let i = 0; i < 10; i++) {
+            windHtml += `<div class="wind w${i}"></div>`;
+        }
+        wind.innerHTML = windHtml;
+        setWindAnimationDelays(wind, 10);
+        effect.appendChild(parallaxWrap(wind, 0.2));
+        // Rain GIF
+        const rainGif = document.createElement('img');
+        rainGif.src = '201.gif';
+        rainGif.alt = 'Rain Animation';
+        rainGif.style.position = 'absolute';
+        rainGif.style.bottom = '0';
+        rainGif.style.right = '0';
+        rainGif.style.width = '200px';
+        rainGif.style.height = 'auto';
+        rainGif.style.zIndex = '10';
+        rainGif.style.opacity = '0.7';        effect.appendChild(rainGif);
+    } else if (weather === 'snow') {
+        // Clouds
+        const clouds = document.createElement('div');
+        clouds.className = 'cloud-effect';
+        clouds.innerHTML = '<div class="cloud"></div><div class="cloud c2"></div><div class="cloud c3"></div>';
+        setCloudAnimationDelays(clouds);
+        effect.appendChild(parallaxWrap(clouds, 0.2));
+        // Snowflakes
+        const snow = document.createElement('div');
+        snow.className = 'snow-effect';
+        for (let i = 0; i < 60; i++) {
+            const flake = document.createElement('div');
+            flake.className = 'snowflake';
+            flake.style.left = Math.random() * 100 + 'vw';
+            flake.style.animationDelay = (Math.random() * 6) + 's';
+            flake.style.width = flake.style.height = (6 + Math.random() * 10) + 'px';
+            snow.appendChild(flake);
+        }
+        effect.appendChild(snow);
+        // Wind (more gusts)
+        const wind = document.createElement('div');
+        wind.className = 'wind-effect';
+        let windHtml = '';
+        for (let i = 0; i < 10; i++) {
+            windHtml += `<div class="wind w${i}"></div>`;
+        }
+        wind.innerHTML = windHtml;
+        setWindAnimationDelays(wind, 10);
+        effect.appendChild(parallaxWrap(wind, 0.15));
+        // Snow GIF
+        const snowGif = document.createElement('img');
+        snowGif.src = '200w.gif';
+        snowGif.alt = 'Snow Animation';
+        snowGif.style.position = 'absolute';
+        snowGif.style.bottom = '0';
+        snowGif.style.left = '0';
+        snowGif.style.width = '200px';
+        snowGif.style.height = 'auto';
+        snowGif.style.zIndex = '10';
+        snowGif.style.opacity = '0.7';        effect.appendChild(snowGif);
+    } else if (weather === 'thunderstorm') {
+        // Clouds
+        const clouds = document.createElement('div');
+        clouds.className = 'cloud-effect';
+        clouds.innerHTML = '<div class="cloud"></div><div class="cloud c2"></div><div class="cloud c3"></div>';
+        setCloudAnimationDelays(clouds);
+        effect.appendChild(parallaxWrap(clouds, 0.25));
+        // Rain
+        const rain = document.createElement('div');
+        rain.className = 'rain-effect';
+        for (let i = 0; i < 80; i++) {
+            const drop = document.createElement('div');
+            drop.className = 'raindrop';
+            drop.style.left = Math.random() * 100 + 'vw';
+            drop.style.animationDelay = (Math.random() * 1.2) + 's';
+            drop.style.height = (14 + Math.random() * 14) + 'px';
+            rain.appendChild(drop);
+        }
+        effect.appendChild(rain);
+        // Wind (more gusts)
+        const wind = document.createElement('div');
+        wind.className = 'wind-effect';
+        let windHtml = '';
+        for (let i = 0; i < 12; i++) {
+            windHtml += `<div class="wind w${i}"></div>`;
+        }
+        wind.innerHTML = windHtml;
+        setWindAnimationDelays(wind, 12);
+        effect.appendChild(parallaxWrap(wind, 0.2));
+        // Lightning (animated, always visible)
+        const thunder = document.createElement('div');
+        thunder.className = 'thunder-effect';
+        thunder.innerHTML = '<div class="lightning"></div>';
+        effect.appendChild(thunder);
+        // Thunderstorm GIF
+        const thunderGif = document.createElement('img');
+        thunderGif.src = '201.gif';
+        thunderGif.alt = 'Thunderstorm Animation';
+        thunderGif.style.position = 'absolute';
+        thunderGif.style.bottom = '0';
+        thunderGif.style.right = '0';
+        thunderGif.style.width = '200px';
+        thunderGif.style.height = 'auto';
+        thunderGif.style.zIndex = '10';
+        thunderGif.style.opacity = '0.7';        effect.appendChild(thunderGif);
+        // Animate lightning flashes (always visible)
+        setInterval(() => {
+            const lightning = thunder.querySelector('.lightning');
+            if (lightning) {
+                lightning.style.opacity = '1';
+                setTimeout(() => { lightning.style.opacity = '0'; }, 220 + Math.random() * 200);
+            }
+        }, 1800 + Math.random() * 1800);
+    } else if (weather === 'mist' || weather === 'fog' || weather === 'haze') {
+        // Animated fog overlay
+        const fog = document.createElement('div');
+        fog.className = 'fog-effect';
+        for (let i = 0; i < 4; i++) {
+            const fogLayer = document.createElement('div');
+            fogLayer.className = 'fog-layer';
+            fogLayer.style.animationDelay = (i * 2) + 's';
+            fog.appendChild(fogLayer);
+        }
+        effect.appendChild(parallaxWrap(fog, 0.1));
+    } else if (weather === 'clear' && isDay) {
+        // Sun rays and subtle glow (always to the right)
+        // Sun is already added above
+        const rays = document.createElement('div');
+        rays.className = 'sun-rays';
+        for (let i = 0; i < 8; i++) {
+            const ray = document.createElement('div');
+            ray.className = 'sun-ray';
+            ray.style.transform = `rotate(${i * 45}deg)`;
+            rays.appendChild(ray);
+        }
+        effect.appendChild(rays);
+    } else if (weather === 'clear' && !isDay) {
+        // Twinkling stars (always visible, high z-index)
+        const stars = document.createElement('div');
+        stars.className = 'star-effect';
+        for (let i = 0; i < 60; i++) {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.style.left = Math.random() * 100 + 'vw';
+            star.style.top = Math.random() * 100 + 'vh';
+            star.style.animationDelay = (Math.random() * 5) + 's';
+            stars.appendChild(star);
+        }
+        effect.appendChild(stars);
+    } else if (weather === 'clouds') {
+        const clouds = document.createElement('div');
+        clouds.className = 'cloud-effect';
+        clouds.innerHTML = '<div class="cloud"></div><div class="cloud c2"></div><div class="cloud c3"></div>';
+        setCloudAnimationDelays(clouds);
+        effect.appendChild(parallaxWrap(clouds, 0.2));
+        // Wind (more gusts)
+        const wind = document.createElement('div');
+        wind.className = 'wind-effect';
+        let windHtml = '';
+        for (let i = 0; i < 8; i++) {
+            windHtml += `<div class="wind w${i}"></div>`;
+        }
+        wind.innerHTML = windHtml;
+        setWindAnimationDelays(wind, 8);
+        effect.appendChild(parallaxWrap(wind, 0.1));
+    }
+    document.body.appendChild(effect);
+
     // Force a repaint to ensure smooth transition
     weatherBackground.offsetHeight;
     
-    // Add new weather and time of day classes
-    weatherBackground.classList.add(weather, isDay ? 'day' : 'night');
-    
     // Update gradient animation
     gradientAnimation.classList.remove('active');
-    // Force repaint
     gradientAnimation.offsetHeight;
     gradientAnimation.classList.add('active');
     
@@ -274,34 +630,56 @@ function updateWeatherBackground(data) {
     updateDayNightCycle(data);
 }
 
+// --- IMPROVED: updateDayNightCycle for mobile sunrise/sunset theme ---
 function updateDayNightCycle(data) {
     const now = new Date();
     const sunrise = new Date(data.sys.sunrise * 1000);
     const sunset = new Date(data.sys.sunset * 1000);
     
-    // Add timezone offset
+    // Add timezone offset for accurate local time
     const timezoneOffset = data.timezone;
     const localTime = new Date(now.getTime() + (timezoneOffset * 1000));
     
-    const isDay = isDayTime(data);
-    const isSunrise = isWithinTimeRange(localTime, sunrise, 30); // 30 minutes around sunrise
-    const isSunset = isWithinTimeRange(localTime, sunset, 30); // 30 minutes around sunset
-
-    // Update day/night overlay
+    // Calculate sunrise/sunset transitions with wider windows
+    const sunriseStart = new Date(sunrise.getTime() - 45 * 60 * 1000); // 45 min before
+    const sunriseEnd = new Date(sunrise.getTime() + 45 * 60 * 1000);   // 45 min after
+    const sunsetStart = new Date(sunset.getTime() - 45 * 60 * 1000);   // 45 min before
+    const sunsetEnd = new Date(sunset.getTime() + 45 * 60 * 1000);     // 45 min after
+    
+    // Determine time of day and transition states
+    const isDay = localTime > sunrise && localTime < sunset;
+    const isSunrise = localTime >= sunriseStart && localTime <= sunriseEnd;
+    const isSunset = localTime >= sunsetStart && localTime <= sunsetEnd;
+    
+    // Calculate transition progress (0 to 1)
+    let transitionProgress = 0;
+    if (isSunrise) {
+        transitionProgress = (localTime - sunriseStart) / (sunriseEnd - sunriseStart);
+    } else if (isSunset) {
+        transitionProgress = (localTime - sunsetStart) / (sunsetEnd - sunsetStart);
+    }
+    
+    // Update overlay classes and opacity based on time
     dayNightOverlay.className = 'day-night-overlay';
-    dayNightOverlay.classList.add(isDay ? 'day-overlay' : 'night-overlay');
+    if (isSunrise) {
+        dayNightOverlay.classList.add('sunrise-overlay');
+        dayNightOverlay.style.opacity = Math.min(0.95, 0.7 + (transitionProgress * 0.25));
+        dayNightOverlay.style.backdropFilter = `blur(${1 + transitionProgress}px) brightness(${1 + (transitionProgress * 0.15)})`;
+    } else if (isSunset) {
+        dayNightOverlay.classList.add('sunset-overlay');
+        dayNightOverlay.style.opacity = Math.min(0.95, 0.7 + (transitionProgress * 0.25));
+        dayNightOverlay.style.backdropFilter = `blur(${1 + transitionProgress}px) saturate(${1 + (transitionProgress * 0.2)})`;
+    } else {
+        dayNightOverlay.classList.add(isDay ? 'day-overlay' : 'night-overlay');
+        dayNightOverlay.style.opacity = '0.95';
+        dayNightOverlay.style.backdropFilter = 'none';
+    }
     
     // Handle sunrise/sunset animations
+    const sunriseSunsetOpacity = isSunrise || isSunset ? Math.min(1, 0.7 + (transitionProgress * 0.3)) : 0;
     sunriseSunsetAnimation.className = 'sunrise-sunset-animation';
-    if (isSunrise) {
-        sunriseSunsetAnimation.classList.add('sunrise-animation');
-        sunriseSunsetAnimation.style.opacity = '1';
-    } else if (isSunset) {
-        sunriseSunsetAnimation.classList.add('sunset-animation');
-        sunriseSunsetAnimation.style.opacity = '1';
-    } else {
-        sunriseSunsetAnimation.style.opacity = '0';
-    }
+    sunriseSunsetAnimation.classList.add(isSunrise ? 'sunrise-animation' : 'sunset-animation');
+    sunriseSunsetAnimation.style.opacity = sunriseSunsetOpacity.toString();
 }
 
 function isDayTime(data) {
@@ -769,4 +1147,48 @@ function showError(message) {
 
 function clearError() {
     errorMessage.classList.remove('active');
+}
+
+// Add this helper function at the end of the file:
+function setCloudAnimationDelays(cloudsContainer) {
+    const now = Date.now();
+    const clouds = cloudsContainer.querySelectorAll('.cloud, .c2, .c3');
+    clouds.forEach((cloud, i) => {
+        // Use a hash of the current time and index for a pseudo-random but persistent delay
+        const moveDelay = ((now / 1000 + i * 13) % 60) * -1; // negative so it starts mid-animation
+        const morphDelay = ((now / 1000 + i * 7) % 12) * -1;
+        const floatDelay = ((now / 1000 + i * 5) % 8) * -1;
+        cloud.style.setProperty('--cloud-move-delay', moveDelay + 's');
+        cloud.style.setProperty('--cloud-morph-delay', morphDelay + 's');
+        cloud.style.setProperty('--cloud-float-delay', floatDelay + 's');
+        // Set a random horizontal starting position for more natural movement
+        cloud.style.left = (8 + Math.random() * 70) + 'vw';
+        // Set a random vertical offset for floating effect
+        cloud.style.top = (30 + Math.random() * 80) + 'px';
+        void cloud.offsetWidth;
+    });
+}
+
+function setWindAnimationDelays(windContainer, gusts = 6) {
+    const now = Date.now();
+    const winds = windContainer.querySelectorAll('.wind, .w2, .w3');
+    winds.forEach((wind, i) => {
+        // Use a hash of the current time and index for a pseudo-random but persistent delay
+        const moveDelay = ((now / 1000 + i * 13) % 60) * -1; // match clouds: 60s cycle
+        const swayDelay = ((now / 1000 + i * 3) % 3) * -1;
+        wind.style.setProperty('--wind-move-delay', moveDelay + 's');
+        wind.style.setProperty('--wind-sway-delay', swayDelay + 's');
+        // Set a random horizontal starting position for more natural movement
+        wind.style.left = (8 + Math.random() * 70) + 'vw';
+        // Set a random vertical offset for floating effect (match clouds)
+        wind.style.top = (30 + Math.random() * 80) + 'px';
+        // Duplicate gusts for more prominent wind effect
+        if (i < gusts) {
+            const gust = wind.cloneNode(true);
+            gust.style.opacity = '0.7';
+            gust.style.transform = `translateY(${-Math.random() * 20}px) rotate(${Math.random() * 10 - 5}deg)`;
+            windContainer.appendChild(gust);
+        }
+        void wind.offsetWidth;
+    });
 }
