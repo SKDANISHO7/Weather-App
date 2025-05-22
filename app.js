@@ -77,8 +77,10 @@ let weatherCache = new Map();
 let debounceTimer;
 
 // Initialize the app
+// Load last city from localStorage, fallback to Nanded
+const lastCity = localStorage.getItem('weatherLastCity') || 'Nanded, Maharashtra';
 document.addEventListener('DOMContentLoaded', () => {
-    checkWeather('Nanded, Maharashtra');
+    checkWeather(lastCity);
     setupEventListeners();
     updateRecentSearchesUI();
     updateFavoriteButton();
@@ -188,6 +190,9 @@ async function checkWeather(city) {
         const airQualityData = await airQualityResponse.json();
         updateAirQuality(airQualityData);
 
+        // After successful weather fetch:
+        localStorage.setItem('weatherLastCity', city);
+
     } catch (error) {
         showError(error.message);
     } finally {
@@ -240,6 +245,60 @@ function updateUI(data, originalCity) {
     sunrise.textContent = sunriseTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
     sunset.textContent = sunsetTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 
+    // Update weather details (comparison-grid)
+    if (comparisonGrid) {
+        comparisonGrid.innerHTML = `
+            <div class="metric-card wind">
+                <div class="metric-icon">
+                    <i class="fas fa-wind"></i>
+                </div>
+                <div class="metric-info">
+                    <h3>Wind Status</h3>
+                    <div class="metric-value">${Math.round(data.wind.speed * 3.6)} km/h</div>
+                    <div class="metric-direction">
+                        <i class="fas fa-location-arrow"></i>
+                        <span>${data.wind.deg !== undefined ? degToCompass(data.wind.deg) : '--'}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="metric-card humidity">
+                <div class="metric-icon">
+                    <i class="fas fa-tint"></i>
+                </div>
+                <div class="metric-info">
+                    <h3>Humidity</h3>
+                    <div class="metric-value">${data.main.humidity}%</div>
+                    <div class="humidity-bar">
+                        <div class="bar-fill" style="width: ${data.main.humidity}%"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="metric-card visibility">
+                <div class="metric-icon">
+                    <i class="fas fa-eye"></i>
+                </div>
+                <div class="metric-info">
+                    <h3>Visibility</h3>
+                    <div class="metric-value">${data.visibility ? (data.visibility / 1000).toFixed(1) : '--'} km</div>
+                    <div class="visibility-status">${getVisibilityStatus(data.visibility)}</div>
+                </div>
+            </div>
+            <div class="metric-card pressure">
+                <div class="metric-icon">
+                    <i class="fas fa-compress-alt"></i>
+                </div>
+                <div class="metric-info">
+                    <h3>Air Pressure</h3>
+                    <div class="metric-value">${data.main.pressure} hPa</div>
+                    <div class="pressure-trend">
+                        <i class="fas fa-arrow-up"></i>
+                        <span>${getPressureTrend(data.main.pressure)}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     // Update weather background and time-based effects
     updateWeatherBackground(data);
     updateDayNightCycle(data);
@@ -249,61 +308,30 @@ function updateUI(data, originalCity) {
 
     // Update temperature scale
     updateTemperatureScale();
+}
 
-    // Update Weather Details container
-    const weatherDetails = document.getElementById('comparison-grid');
-    const windValue = weatherDetails.querySelector('.wind .metric-value');
-    const windDirection = weatherDetails.querySelector('.wind .metric-direction span');
-    const humidityValue = weatherDetails.querySelector('.humidity .metric-value');
-    const humidityBar = weatherDetails.querySelector('.humidity .bar-fill');
-    const visibilityValue = weatherDetails.querySelector('.visibility .metric-value');
-    const visibilityStatus = weatherDetails.querySelector('.visibility .visibility-status');
-    const pressureValue = weatherDetails.querySelector('.pressure .metric-value');
-    const pressureTrend = weatherDetails.querySelector('.pressure .pressure-trend span');
-    const pressureIcon = weatherDetails.querySelector('.pressure .pressure-trend i');
+function degToCompass(num) {
+    if (typeof num !== 'number') return '--';
+    const val = Math.floor((num / 22.5) + 0.5);
+    const arr = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE", "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"];
+    return arr[(val % 16)];
+}
 
-    // Update wind
-    const windSpeedKmh = Math.round(data.wind.speed * 3.6); // Convert m/s to km/h
-    windValue.textContent = `${windSpeedKmh} km/h`;
-    
-    // Update wind direction
-    const windDeg = data.wind.deg;
-    const directions = ['N', 'NNE', 'NE', 'ENE', 'E', 'ESE', 'SE', 'SSE', 'S', 'SSW', 'SW', 'WSW', 'W', 'WNW', 'NW', 'NNW'];
-    const directionIndex = Math.round(((windDeg + 11.25) % 360) / 22.5);
-    windDirection.textContent = directions[directionIndex];
-    
-    // Update humidity
-    humidityValue.textContent = `${data.main.humidity}%`;
-    humidityBar.style.width = `${data.main.humidity}%`;
-    
-    // Update visibility
-    const visibilityKm = (data.visibility / 1000).toFixed(1);
-    visibilityValue.textContent = `${visibilityKm} km`;
-    // Set visibility status
-    if (visibilityKm >= 10) {
-        visibilityStatus.textContent = 'Clear view';
-        visibilityStatus.style.color = 'var(--success)';
-    } else if (visibilityKm >= 5) {
-        visibilityStatus.textContent = 'Moderate';
-        visibilityStatus.style.color = '#ffd700';
-    } else {
-        visibilityStatus.textContent = 'Poor visibility';
-        visibilityStatus.style.color = '#ff7e5f';
-    }
-    
-    // Update pressure
-    pressureValue.textContent = `${data.main.pressure} hPa`;
-    // Set pressure trend (comparing with standard pressure 1013.25 hPa)
-    if (data.main.pressure > 1013.25) {
-        pressureTrend.textContent = 'Rising';
-        pressureIcon.className = 'fas fa-arrow-up';
-    } else if (data.main.pressure < 1013.25) {
-        pressureTrend.textContent = 'Falling';
-        pressureIcon.className = 'fas fa-arrow-down';
-    } else {
-        pressureTrend.textContent = 'Steady';
-        pressureIcon.className = 'fas fa-arrows-alt-h';
-    }
+function getVisibilityStatus(visibility) {
+    if (!visibility && visibility !== 0) return '--';
+    const km = visibility / 1000;
+    if (km >= 10) return 'Clear view';
+    if (km >= 4) return 'Good';
+    if (km >= 2) return 'Moderate';
+    if (km >= 1) return 'Low';
+    return 'Very Low';
+}
+
+function getPressureTrend(pressure) {
+    // Placeholder: In real apps, compare with previous value or use API trend
+    if (pressure > 1013) return 'Rising';
+    if (pressure < 1013) return 'Falling';
+    return 'Stable';
 }
 
 // --- THEME SYSTEM ---
@@ -317,75 +345,64 @@ function applyWeatherTheme({ weather, isDay, temp, humidity, isDarkMode }) {
     document.body.classList.add(weather, isDay ? 'day' : 'night');
     weatherBackground.classList.add(weather, isDay ? 'day' : 'night');
 
-    // Automatically set dark mode based on time if not manually set
-    if (localStorage.getItem('weatherDarkMode') === null) {
-        const currentHour = new Date().getHours();
-        isDarkMode = currentHour < 6 || currentHour >= 18; // Dark mode between 6 PM and 6 AM
-    }
-
     // Set CSS variables for gradients and overlays
+    // (These will be used in styles.css for backgrounds, overlays, and UI)
     let gradient = '';
     let overlay = '';
     let accent = '';
     let climateEffect = '';
-
-    // Weather-based gradients optimized for mobile
+    // Weather-based gradients
     if (weather === 'clear') {
         gradient = isDay
             ? 'linear-gradient(135deg, #56ccf2 0%, #2f80ed 100%)'
-            : 'linear-gradient(135deg, #1f2937 0%, #111827 100%)';
+            : 'linear-gradient(135deg, #232526 0%, #414345 100%)';
         accent = isDay ? '#ffe066' : '#bfcfff';
     } else if (weather === 'clouds') {
         gradient = isDay
-            ? 'linear-gradient(135deg, #9ca3af 0%, #6b7280 100%)'
-            : 'linear-gradient(135deg, #1f2937 0%, #374151 100%)';
+            ? 'linear-gradient(135deg, #a2a6a7 0%, #717e88 100%)'
+            : 'linear-gradient(135deg, #292E49 0%, #536976 100%)';
         accent = '#bfcfff';
     } else if (weather === 'rain' || weather === 'rainy') {
         gradient = isDay
             ? 'linear-gradient(135deg, #4b6cb7 0%, #182848 100%)'
-            : 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)';
+            : 'linear-gradient(135deg, #232526 0%, #414345 100%)';
         accent = '#4facfe';
         overlay = 'rain';
     } else if (weather === 'thunderstorm') {
-        gradient = 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)';
+        gradient = isDay
+            ? 'linear-gradient(135deg, #283E51 0%, #4B79A1 100%)'
+            : 'linear-gradient(135deg, #0f0c29 0%, #302b63 100%)';
         accent = '#ffd700';
         overlay = 'thunderstorm';
     } else if (weather === 'snow') {
         gradient = isDay
-            ? 'linear-gradient(135deg, #e2e8f0 0%, #cbd5e1 100%)'
-            : 'linear-gradient(135deg, #1e293b 0%, #334155 100%)';
+            ? 'linear-gradient(135deg, #bcc7cf 0%, #aab5bc 100%)'
+            : 'linear-gradient(135deg, #1a237e 0%, #3949ab 100%)';
         accent = '#e0eaff';
         overlay = 'snow';
     } else if (weather === 'mist' || weather === 'fog' || weather === 'haze') {
         gradient = isDay
-            ? 'linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%)'
-            : 'linear-gradient(135deg, #334155 0%, #1e293b 100%)';
+            ? 'linear-gradient(135deg, #cfd9df 0%, #e2ebf0 100%)'
+            : 'linear-gradient(135deg, #2C3E50 0%, #3498DB 100%)';
         accent = '#bfcfff';
         overlay = 'fog';
+    } else {
+        gradient = isDay
+            ? 'linear-gradient(135deg, #56ccf2 0%, #2f80ed 100%)'
+            : 'linear-gradient(135deg, #232526 0%, #414345 100%)';
+        accent = '#ffe066';
     }
-
-    // Set temperature-based effects
+    // Climate-based overlays
     if (typeof temp === 'number') {
         if (temp >= 35) climateEffect = 'heat';
         else if (temp <= 5) climateEffect = 'frost';
     }
     if (typeof humidity === 'number' && humidity >= 85) climateEffect = 'humid';
-
-    // Apply CSS variables with smoother transitions
+    // Set CSS variables
     document.body.style.setProperty('--weather-gradient', gradient);
     document.body.style.setProperty('--weather-accent', accent);
     document.body.style.setProperty('--weather-overlay', overlay);
     document.body.style.setProperty('--weather-climate', climateEffect);
-    
-    // Force hardware acceleration for smoother animations on mobile
-    document.body.style.setProperty('--hardware-acceleration', 'translateZ(0)');
-    weatherBackground.style.setProperty('--hardware-acceleration', 'translateZ(0)');
-
-    // Update theme toggle icon
-    const themeIcon = document.querySelector('.theme-toggle i');
-    if (themeIcon) {
-        themeIcon.className = isDarkMode ? 'fas fa-sun' : 'fas fa-moon';
-    }
 }
 
 // --- updateWeatherBackground: now uses applyWeatherTheme ---
@@ -528,7 +545,7 @@ function updateWeatherBackground(data) {
         // Rain GIF
         const rainGif = document.createElement('img');
         rainGif.src = '201.gif';
-        rainGif.alt = 'Rain Animation';
+        rainGif.alt = '';
         rainGif.style.position = 'absolute';
         rainGif.style.bottom = '0';
         rainGif.style.right = '0';
@@ -620,7 +637,10 @@ function updateWeatherBackground(data) {
         thunderGif.style.width = '200px';
         thunderGif.style.height = 'auto';
         thunderGif.style.zIndex = '10';
-        thunderGif.style.opacity = '0.7';        effect.appendChild(thunderGif);
+        thunderGif.style.opacity = '0.7';
+        effect.appendChild(thunderGif);
+        // Audio
+        addWeatherAudio('https://cdn.pixabay.com/audio/2022/07/26/audio_124bfae7e2.mp3', 'Thunderstorm');
         // Animate lightning flashes (always visible)
         setInterval(() => {
             const lightning = thunder.querySelector('.lightning');
@@ -698,36 +718,26 @@ function updateWeatherBackground(data) {
 
 // --- IMPROVED: updateDayNightCycle for mobile sunrise/sunset theme ---
 function updateDayNightCycle(data) {
-    // Get current UTC time
     const now = new Date();
-    
-    // Convert sunrise/sunset times to city's local time
     const sunrise = new Date(data.sys.sunrise * 1000);
     const sunset = new Date(data.sys.sunset * 1000);
-    
-    // Get the timezone offset for the city
-    const cityTimezoneOffset = data.timezone;
-    
-    // Get user's local timezone offset in seconds
-    const userTimezoneOffset = now.getTimezoneOffset() * 60;
-    
-    // Calculate the total offset needed
-    const totalOffset = cityTimezoneOffset + userTimezoneOffset;
-    
-    // Apply the offset to get the correct local time
-    const localTime = new Date(now.getTime() + (totalOffset * 1000));
-    
-    // Calculate sunrise/sunset transitions with wider windows
-    const sunriseStart = new Date(sunrise.getTime() - 45 * 60 * 1000); // 45 min before
-    const sunriseEnd = new Date(sunrise.getTime() + 45 * 60 * 1000);   // 45 min after
-    const sunsetStart = new Date(sunset.getTime() - 45 * 60 * 1000);   // 45 min before
-    const sunsetEnd = new Date(sunset.getTime() + 45 * 60 * 1000);     // 45 min after
-    
+    // Get precise timezone offset and calculate local time
+    const timezoneOffset = data.timezone;
+    const localTime = new Date(now.getTime() + (timezoneOffset * 1000));
+    // Use API-provided sunrise/sunset times directly as they're already in local time
+    const localSunrise = sunrise;
+    const localSunset = sunset;
+    // Use same transition window for all devices for consistency
+    const transitionMins = 45; // always 45 minutes for both desktop and mobile
+    // Calculate sunrise/sunset transitions
+    const sunriseStart = new Date(localSunrise.getTime() - transitionMins * 60 * 1000);
+    const sunriseEnd = new Date(localSunrise.getTime() + transitionMins * 60 * 1000);
+    const sunsetStart = new Date(localSunset.getTime() - transitionMins * 60 * 1000);
+    const sunsetEnd = new Date(localSunset.getTime() + transitionMins * 60 * 1000);
     // Determine time of day and transition states
-    const isDay = localTime > sunrise && localTime < sunset;
+    const isDay = localTime > localSunrise && localTime < localSunset;
     const isSunrise = localTime >= sunriseStart && localTime <= sunriseEnd;
     const isSunset = localTime >= sunsetStart && localTime <= sunsetEnd;
-    
     // Calculate transition progress (0 to 1)
     let transitionProgress = 0;
     if (isSunrise) {
@@ -735,7 +745,6 @@ function updateDayNightCycle(data) {
     } else if (isSunset) {
         transitionProgress = (localTime - sunsetStart) / (sunsetEnd - sunsetStart);
     }
-    
     // Update overlay classes and opacity based on time
     dayNightOverlay.className = 'day-night-overlay';
     if (isSunrise) {
@@ -751,7 +760,6 @@ function updateDayNightCycle(data) {
         dayNightOverlay.style.opacity = '0.95';
         dayNightOverlay.style.backdropFilter = 'none';
     }
-    
     // Handle sunrise/sunset animations
     const sunriseSunsetOpacity = isSunrise || isSunset ? Math.min(1, 0.7 + (transitionProgress * 0.3)) : 0;
     sunriseSunsetAnimation.className = 'sunrise-sunset-animation';
@@ -760,27 +768,20 @@ function updateDayNightCycle(data) {
 }
 
 function isDayTime(data) {
-    // Get current UTC time
     const now = new Date();
-    
-    // Convert sunrise/sunset times to city's local time
     const sunrise = new Date(data.sys.sunrise * 1000);
     const sunset = new Date(data.sys.sunset * 1000);
     
-    // Get the timezone offset for Nanded (or any city)
-    const cityTimezoneOffset = data.timezone;
+    // Get timezone offset in milliseconds
+    const timezoneOffset = data.timezone;
+    const localTime = new Date(now.getTime() + (timezoneOffset * 1000));
     
-    // Get user's local timezone offset in seconds
-    const userTimezoneOffset = now.getTimezoneOffset() * 60;
+    // Convert sunrise/sunset to local time
+    const localSunrise = sunrise;  // API already provides these in correct timezone
+    const localSunset = sunset;    // API already provides these in correct timezone
     
-    // Calculate the total offset needed
-    const totalOffset = cityTimezoneOffset + userTimezoneOffset;
-    
-    // Apply the offset to get the correct local time
-    const localTime = new Date(now.getTime() + (totalOffset * 1000));
-    
-    // Compare with sunrise and sunset times
-    return localTime > sunrise && localTime < sunset;
+    // Compare times using getTime() for more precise comparison
+    return localTime.getTime() > localSunrise.getTime() && localTime.getTime() < localSunset.getTime();
 }
 
 function isWithinTimeRange(current, target, minutesRange) {
@@ -866,44 +867,19 @@ function updateForecast(data) {
         const dayData = day.data[0]; // Use first entry of the day for daily forecast
         const date = new Date(dayData.dt * 1000);
         
-        // Calculate average temperature, min, and max for the day
-        const temps = day.data.map(d => d.main.temp);
-        const avgTemp = temps.reduce((a, b) => a + b, 0) / temps.length;
-        const minTemp = Math.min(...temps);
-        const maxTemp = Math.max(...temps);
-        
         const dayElement = document.createElement('div');
         dayElement.className = `forecast-day ${index === 0 ? 'active' : ''}`;
         dayElement.dataset.date = date.toISOString().split('T')[0];
-        
-        // Convert temperatures based on current scale
-        const tempDisplay = currentScale === 'fahrenheit' 
-            ? `${Math.round((avgTemp * 9/5) + 32)}°F` 
-            : currentScale === 'kelvin'
-                ? `${Math.round(avgTemp + 273.15)}K`
-                : `${Math.round(avgTemp)}°C`;
-
-        const minTempDisplay = currentScale === 'fahrenheit'
-            ? `${Math.round((minTemp * 9/5) + 32)}°`
-            : currentScale === 'kelvin'
-                ? `${Math.round(minTemp + 273.15)}°`
-                : `${Math.round(minTemp)}°`;
-
-        const maxTempDisplay = currentScale === 'fahrenheit'
-            ? `${Math.round((maxTemp * 9/5) + 32)}°`
-            : currentScale === 'kelvin'
-                ? `${Math.round(maxTemp + 273.15)}°`
-                : `${Math.round(maxTemp)}°`;
         
         dayElement.innerHTML = `
             <div class="day-name">${index === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'long' })}</div>
             <div class="day-date">${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</div>
             <img src="https://openweathermap.org/img/wn/${dayData.weather[0].icon}@2x.png" alt="${dayData.weather[0].description}" class="forecast-icon">
-            <div class="forecast-temp">${tempDisplay}</div>
+            <div class="forecast-temp">${Math.round(dayData.main.temp)}°C</div>
             <div class="forecast-description">${dayData.weather[0].description}</div>
             <div class="forecast-details">
-                <div title="Maximum temperature"><i class="fas fa-temperature-arrow-up"></i> ${maxTempDisplay}</div>
-                <div title="Minimum temperature"><i class="fas fa-temperature-arrow-down"></i> ${minTempDisplay}</div>
+                <div><i class="fas fa-temperature-arrow-up"></i> ${Math.round(dayData.main.temp_max)}°</div>
+                <div><i class="fas fa-temperature-arrow-down"></i> ${Math.round(dayData.main.temp_min)}°</div>
             </div>
         `;
         
@@ -946,28 +922,17 @@ function groupForecastByDay(forecastList) {
 function updateHourlyForecast(hourlyData) {
     hourlyForecast.innerHTML = '';
     
-    hourlyData.forEach((item, index) => {
+    hourlyData.forEach(item => {
         const date = new Date(item.dt * 1000);
         const timeString = date.toLocaleTimeString('en-US', { hour: 'numeric', hour12: true });
         
         const hourElement = document.createElement('div');
         hourElement.className = 'hourly-item';
-        hourElement.style.animationDelay = `${0.6 + (index * 0.1)}s`;
-        
-        // Convert temperature based on current scale
-        const temp = currentScale === 'fahrenheit' 
-            ? Math.round((item.main.temp * 9/5) + 32)
-            : currentScale === 'kelvin'
-                ? Math.round(item.main.temp + 273.15)
-                : Math.round(item.main.temp);
-        
-        const scale = currentScale === 'fahrenheit' ? 'F' 
-            : currentScale === 'kelvin' ? 'K' : 'C';
         
         hourElement.innerHTML = `
             <div class="hour-time">${timeString}</div>
             <img src="https://openweathermap.org/img/wn/${item.weather[0].icon}.png" alt="${item.weather[0].description}" class="hour-icon">
-            <div class="hour-temp">${temp}°${scale}</div>
+            <div class="hour-temp">${Math.round(item.main.temp)}°</div>
             <div class="forecast-description">${item.weather[0].description}</div>
         `;
         
