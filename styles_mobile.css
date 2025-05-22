@@ -1,0 +1,137 @@
+/* Mobile Responsive Styles */
+@media screen and (max-width: 768px) {
+    .container {
+        padding: 16px !important;
+    }
+
+    .weather-display {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .current-weather {
+        width: 100%;
+        padding: 20px;
+    }
+
+    .forecast-container {
+        width: 100%;
+    }
+
+    .comparison-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+
+    .comparison-container {
+        padding: 15px;
+    }
+
+    .metric-card {
+        padding: 15px;
+    }
+
+    .weather-details {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 15px;
+    }
+
+    .temperature-scale {
+        transform: scale(0.9);
+    }
+
+    .forecast-days {
+        display: flex;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        gap: 15px;
+        padding: 10px 0;
+    }
+
+    .forecast-day {
+        min-width: 150px;
+        scroll-snap-align: start;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        padding: 15px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .forecast-day:active {
+        transform: scale(0.95);
+    }
+
+    .forecast-day.active {
+        background: rgba(255, 255, 255, 0.2);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .hourly-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scroll-snap-type: x mandatory;
+        padding: 10px 0;
+    }
+
+    .hourly-item {
+        min-width: 100px;
+        scroll-snap-align: start;
+    }
+
+    /* Ensure theme consistency */
+    .weather-background, .gradient-animation, .day-night-overlay, .sunrise-sunset-animation {
+        background-size: cover !important;
+        background-position: center !important;
+    }
+
+    /* Improve touch targets */
+    .search-btn, .favorite-btn, .theme-toggle, .scale-item {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    /* Smoother scrolling */
+    * {
+        -webkit-overflow-scrolling: touch;
+    }
+
+    /* Prevent zoom on input focus */
+    input[type="text"] {
+        font-size: 16px !important;
+    }
+}
+
+/* Forecast Card Hover Effects (works on both mobile and desktop) */
+.forecast-day {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.forecast-day::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at var(--x, 50%) var(--y, 50%), 
+                               rgba(255,255,255,0.1) 0%,
+                               rgba(255,255,255,0) 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+@media (hover: hover) {
+    .forecast-day:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    .forecast-day:hover::before {
+        opacity: 1;
+    }
+}
