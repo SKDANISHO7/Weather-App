@@ -1779,48 +1779,73 @@ body.mist {
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-/* --- Rain Animation --- */
-.rain-effect {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 1000;
-}
-
-.raindrop {
-    position: absolute;
-    width: 2px;
-    height: 100px;
-    background: linear-gradient(transparent, rgba(255, 255, 255, 0.8));
-    animation: rain-fall linear infinite;
-}
-
-@keyframes rain-fall {
+/* Day Animation */
+@keyframes dayAnimation {
     0% {
-        transform: translateY(-120px);
-        opacity: 0;
-    }
-    10% {
-        opacity: 1;
-    }
-    90% {
-        opacity: 1;
+        background: linear-gradient(to top, #87ceeb, #f0e68c);
     }
     100% {
-        transform: translateY(100vh);
-        opacity: 0;
+        background: linear-gradient(to top, #00bfff, #ffffe0);
     }
 }
 
-/* Ensure rain is visible on all backgrounds */
-.rain-effect .raindrop {
-    box-shadow: 0 0 2px rgba(255, 255, 255, 0.5);
+/* Night Animation */
+@keyframes nightAnimation {
+    0% {
+        background: linear-gradient(to bottom, #2c3e50, #34495e);
+    }
+    100% {
+        background: linear-gradient(to bottom, #1c2833, #2c3e50);
+    }
 }
 
-/* Different raindrop speeds */
-.raindrop:nth-child(3n) { animation-duration: 0.8s; }
-.raindrop:nth-child(3n+1) { animation-duration: 1s; }
-.raindrop:nth-child(3n+2) { animation-duration: 1.2s; }
+/* Thunder Animation */
+@keyframes thunderAnimation {
+    0%, 100% {
+        background: linear-gradient(to bottom, #2c3e50, #34495e);
+    }
+    50% {
+        background: linear-gradient(to bottom, #ffffff, #2c3e50);
+    }
+}
+
+/* Rain Animation */
+@keyframes rainAnimation {
+    0% {
+        background: linear-gradient(to bottom, #5f9ea0, #4682b4);
+    }
+    100% {
+        background: linear-gradient(to bottom, #4682b4, #5f9ea0);
+    }
+}
+
+/* Wind Animation */
+@keyframes windAnimation {
+    0% {
+        background: linear-gradient(to right, #d3d3d3, #a9a9a9);
+    }
+    100% {
+        background: linear-gradient(to right, #a9a9a9, #d3d3d3);
+    }
+}
+
+/* Apply animations to the weather background */
+.weather-background.day {
+    animation: dayAnimation 10s ease-in-out forwards;
+}
+
+.weather-background.night {
+    animation: nightAnimation 10s ease-in-out forwards;
+}
+
+.weather-background.thunder {
+    animation: thunderAnimation 5s ease-in-out infinite;
+}
+
+.weather-background.rain {
+    animation: rainAnimation 10s ease-in-out forwards;
+}
+
+.weather-background.wind {
+    animation: windAnimation 10s ease-in-out forwards;
+}
