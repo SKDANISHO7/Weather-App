@@ -302,6 +302,8 @@ function updateUI(data, originalCity) {
     // Update weather background and time-based effects
     updateWeatherBackground(data);
     updateDayNightCycle(data);
+    updateSunriseSunsetAnimation(data);
+    updateWeatherAnimation(data); // <-- Call the new function here
 
     // Update favorite button
     updateFavoriteButton();
@@ -714,6 +716,20 @@ function updateWeatherBackground(data) {
     
     // Update overlay based on time of day
     updateDayNightCycle(data);
+}
+
+function updateSunriseSunsetAnimation(data) {
+    const currentTime = new Date().getTime();
+    const sunriseTime = new Date(data.sys.sunrise * 1000).getTime();
+    const sunsetTime = new Date(data.sys.sunset * 1000).getTime();
+
+    if (currentTime >= sunriseTime && currentTime < sunsetTime) {
+        weatherBackground.classList.add('sunrise');
+        weatherBackground.classList.remove('sunset');
+    } else {
+        weatherBackground.classList.add('sunset');
+        weatherBackground.classList.remove('sunrise');
+    }
 }
 
 // --- IMPROVED: updateDayNightCycle for mobile sunrise/sunset theme ---
@@ -1281,4 +1297,31 @@ function setWindAnimationDelays(windContainer, gusts = 6) {
         }
         void wind.offsetWidth;
     });
+}
+
+// New function to update weather animation classes
+function updateWeatherAnimation(data) {
+    const currentTime = new Date().getTime();
+    const sunriseTime = new Date(data.sys.sunrise * 1000).getTime();
+    const sunsetTime = new Date(data.sys.sunset * 1000).getTime();
+    const weatherCondition = data.weather[0].main.toLowerCase();
+
+    // Remove all weather classes
+    weatherBackground.classList.remove('day', 'night', 'thunder', 'rain', 'wind');
+
+    // Determine day or night
+    if (currentTime >= sunriseTime && currentTime < sunsetTime) {
+        weatherBackground.classList.add('day');
+    } else {
+        weatherBackground.classList.add('night');
+    }
+
+    // Add specific weather animations
+    if (weatherCondition.includes('thunderstorm')) {
+        weatherBackground.classList.add('thunder');
+    } else if (weatherCondition.includes('rain')) {
+        weatherBackground.classList.add('rain');
+    } else if (weatherCondition.includes('wind')) {
+        weatherBackground.classList.add('wind');
+    }
 }
